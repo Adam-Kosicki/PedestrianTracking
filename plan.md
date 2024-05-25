@@ -38,9 +38,11 @@ Use YOLO for pedestrian clip visualization
     https://docs.google.com/document/d/1480ka6sRHQeZ5Q2ZxSJV_rJJkZuTbPi6qoVIRW56Kbg/edit?usp=sharing
     ```
 
-4. Create GUI that allows the suer to get these clips
+4. Determine some "region of interest" in which to focus? Or maybe ask user to select region of interest? 
+
+5. Create GUI that allows the user to get these clips
     * Give them checkboxes to fill out and save for certain events
 
-5. Make YOLO utilize only GPU (optional)
+6. Make YOLO utilize only GPU (optional)
 
-6. Create custom model for YOLO (optional)
+7. Create custom model for YOLO (optional)
