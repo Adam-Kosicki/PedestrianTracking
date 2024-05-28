@@ -1,4 +1,10 @@
+# File: PedestrianDetectorV1.py
+# Author: Kamal Yeshodhar Shastry Gattu <KamalYeshodharShastry_Gattu@uml.edu> <kysgattu0502@gmail.com>
+# Date: November 1, 2023
+# Description: This is a tool that Detects, Tracks and Counts number of people passing across particular path(s) in a Timelapse video
+
 # Pedestrian Detection
+# !pip install -q -r requirements.txt
 
 import cv2
 from ultralytics import YOLO
@@ -11,6 +17,7 @@ from tqdm import tqdm
 import supervision as sv
 import tkinter as tk
 from tkinter import filedialog, simpledialog, messagebox
+import datetime
 
 
 # Display image and videos
@@ -103,7 +110,7 @@ def detect_pedestrains(video_path, target_dir, regions):
     video = cv2.VideoCapture(video_path)
 
     # Objects to detect Yolo
-    class_IDS = [0]
+    class_IDS = [0, 1] # person and bike
     # Auxiliary variables
     centers_old = {}
 
@@ -149,6 +156,10 @@ def detect_pedestrains(video_path, target_dir, regions):
     # rois = extract_roi_from_video(video_path=video_path, regions=regions)
     # roi_counts = {roi['name']: 0 for roi in rois}
     count_p_roi = 0
+    
+    # Keep track of when objects were detected
+    object_time_tracker = {}
+    
     for i in tqdm(range(int(video.get(cv2.CAP_PROP_FRAME_COUNT)))):  # Outer loop iterating through each frame
         # print(i)
         # _, frame = video.read()
@@ -168,14 +179,38 @@ def detect_pedestrains(video_path, target_dir, regions):
         if verbose:
             print('Dimension Scaled(frame): ', (frame.shape[1], frame.shape[0]))
 
-        y_hat = model.predict(frame, conf=conf_level, classes=class_IDS, device='cpu', verbose=False, tracker="bytetrack.yaml")
+        # y_hat = model.predict(frame, conf=conf_level, classes=class_IDS, device='cpu', verbose=False, tracker="bytetrack.yaml")
+        y_hat = model.track(frame, persist=True, conf=conf_level, classes=class_IDS, iou=0.5, show=False, verbose=False, tracker="bytetrack.yaml")
 
         boxes = y_hat[0].boxes.xyxy.cpu().numpy()
         conf = y_hat[0].boxes.conf.cpu().numpy()
         classes = y_hat[0].boxes.cls.cpu().numpy()
 
-        positions_frame = pd.DataFrame(np.concatenate([boxes, conf.reshape(-1, 1), classes.reshape(-1, 1)], axis=1),
-                                        columns=['xmin', 'ymin', 'xmax', 'ymax', 'conf', 'class'])
+        positions_frame = pd.DataFrame(
+            np.concatenate(
+                [boxes, conf.reshape(-1, 1), classes.reshape(-1, 1)]
+                , axis=1
+            ),
+            columns=['xmin', 'ymin', 'xmax', 'ymax', 'conf', 'class']
+        )
+        
+        # Save time stamps of objects in frame
+        curr_frame_num = int(video.get(cv2.CAP_PROP_POS_FRAMES))
+        for i, r in enumerate(y_hat):
+            for index, box in enumerate(r.boxes):
+                # id of object
+                print("-->", box.id, " ", box.cls)
+                if(box.id and box.cls[0] != None):
+                    # print(box.id)
+                    # print(box.cls)
+                    tracker_id = int(box.id)
+                    tracker_cls = int(box.cls[0])
+                    print("class:", tracker_cls)
+                    print("id", tracker_id)
+
+                    obj_idx = "class_" + str(tracker_cls) + "_idx_" + str(tracker_id)
+                    if(not(obj_idx in object_time_tracker)):
+                        object_time_tracker[obj_idx] = str(datetime.timedelta(seconds=curr_frame_num/fps))
 
         labels = [dict_classes[i] for i in classes]
 
@@ -192,9 +227,15 @@ def detect_pedestrains(video_path, target_dir, regions):
             # for center_x, center_y in centers_old[id_obj].values():
             #     cv2.circle(frame, (center_x, center_y), 5, (0, 0, 255), -1) # Adds circle in person
 
-            cv2.putText(img=frame, text=id_obj + ':' + str(np.round(conf[ix], 2)),
-                        org=(xmin, ymin - 10), fontFace=cv2.FONT_HERSHEY_TRIPLEX, fontScale=0.8, color=(0, 0, 255),
-                        thickness=1)
+            cv2.putText(
+                img=frame,
+                text=id_obj + ':' + str(np.round(conf[ix], 2)),
+                org=(xmin, ymin - 10),
+                fontFace=cv2.FONT_HERSHEY_TRIPLEX,
+                fontScale=0.8,
+                color=(0, 0, 255),
+                thickness=1
+            )
 
         # # Update count for the current ROI in the dictionary
         # # roi_counts[roi['name']] = count_p_roi
@@ -216,6 +257,11 @@ def detect_pedestrains(video_path, target_dir, regions):
 
         frames_list.append(frame)
         output_video.write(frame)
+        
+    print(object_time_tracker)
+    obj_tracker_file_ptr = open(result_directory + "/" + result_video_name+"_obj_timestamps", "w")
+    obj_tracker_file_ptr.write(str(object_time_tracker))
+    obj_tracker_file_ptr.close()
 
     output_video.release()
 
@@ -332,4 +378,3 @@ if __name__ == "__main__":
 
     # Start the Tkinter event loop
     root.mainloop()
-
