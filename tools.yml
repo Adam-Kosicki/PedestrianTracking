@@ -1,0 +1,26 @@
+channels:
+    - conda-forge
+dependencies:
+    - cudatoolkit=11.8.0 
+    - cudnn
+    - jupyter
+    - scikit-learn
+    - scipy
+    - pandas
+    - pandas-datareader
+    - matplotlib
+    - pillow
+    - tqdm
+    - requests
+    - h5py
+    - pyyaml
+    - flask
+    - boto3
+    - pip
+    - pip:
+        - tensorflow
+        - tensorflow-gpu
+        - bayesian-optimization
+        - gym
+        - kaggle
+        
