@@ -6,3 +6,6 @@ peds_tracker_gpu/
 .ipynb_checkpoints/
 main.py
 __pycache__/
+adam_test_0.ipynb
+tools.yml
+tracker.py

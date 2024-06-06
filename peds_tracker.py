@@ -18,6 +18,7 @@ import supervision as sv
 import tkinter as tk
 from tkinter import filedialog, simpledialog, messagebox
 import datetime
+import torch
 
 
 # Display image and videos
@@ -92,16 +93,25 @@ def extract_roi_from_video(video_path, regions):
 
 
 def detect_pedestrains(video_path, target_dir, regions):
+    
+    # Device to run in
+    device = None
+    if(torch.cuda.is_available()):
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+    print("using", device, "device")
+    
     ### Configurations #Verbose during prediction
     verbose = False
     # Scaling percentage of original frame
     scale_percent = 100
     # model confidence level
-    conf_level = 0.2
+    conf_level = 0.3
     # Threshold of centers ( old\new)
     thr_centers = 30
     # Number of max frames to consider a object lost
-    frame_max = 10
+    frame_max = 25
     # Number of max tracked centers stored
     patience = 100
     # ROI area color transparency
@@ -151,7 +161,12 @@ def detect_pedestrains(video_path, target_dir, regions):
     output_video = cv2.VideoWriter(annotated_video,
                                    cv2.VideoWriter_fourcc(*VIDEO_CODEC),
                                    fps, (width, height))
+    
     model = YOLO('yolov9e-seg.pt')
+    # use gpu for model
+    model.to(device)
+    torch.cuda.synchronize()
+    
     dict_classes = model.model.names
     # rois = extract_roi_from_video(video_path=video_path, regions=regions)
     # roi_counts = {roi['name']: 0 for roi in rois}
@@ -257,6 +272,7 @@ def detect_pedestrains(video_path, target_dir, regions):
 
         frames_list.append(frame)
         output_video.write(frame)
+    torch.cuda.synchronize()
         
     print(object_time_tracker)
     obj_tracker_file_ptr = open(result_directory + "/" + result_video_name+"_obj_timestamps", "w")
