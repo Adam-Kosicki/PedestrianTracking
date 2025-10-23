@@ -1,0 +1,22 @@
+# botsort_pedestrian.yaml
+# Optimized for stationary + moving pedestrians (crosswalk/city footage)
+# Compatible with Ultralytics >= 8.3.200
+
+tracker_type: botsort   # must exist! valid options: botsort | bytetrack
+
+# --- Detection thresholds ---
+track_high_thresh: 0.3        # higher = fewer false matches
+track_low_thresh: 0.05        # allow recovery of weak detections
+new_track_thresh: 0.4         # confidence needed to start new ID
+match_thresh: 0.7             # IoU threshold for matching
+track_buffer: 80              # keep "lost" tracks alive longer (good for stop-and-go pedestrians)
+fuse_score: True              # fuse detection confidence + motion for better association
+
+# --- BoT-SORT specifics ---
+gmc_method: none              # static camera
+with_reid: True               # enable appearance-based ReID
+proximity_thresh: 0.5         # IoU threshold for appearance matching
+appearance_thresh: 0.75       # higher = fewer false ID swaps
+model: 'yolov10s.pt'          # use detector features; no external ReID weights required
+
+ 
