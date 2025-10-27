@@ -1,3 +1,4 @@
 coco_yolo3.h5
 sources/
 yolov*.pt
+ped/

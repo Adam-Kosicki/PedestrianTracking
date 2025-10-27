@@ -1,0 +1,1 @@
+# ROI Entry Log | session=20251024_125154 | source_type=rtsp | source=rtsp://root:root@192.168.6.149/axis-media/media.amp?videocodec=h264&resolution=1280x720
